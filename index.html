@@ -4,32 +4,45 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>제주 교육여행 일정</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@500;600;700&display=swap">
 <style>
   :root {
-    --bg: #f5f6f8;
+    --bg: #f1f2f4;
     --card-bg: #ffffff;
-    --text: #1c1e21;
-    --muted: #8a8f98;
-    --border: #e4e6ea;
-    --line: #d8dbe0;
-    --accent: #0f9d78;
-    --accent-bg: #e6f7f1;
-    --accent-text: #0b7a5c;
-    --shadow: 0 1px 3px rgba(20, 20, 30, 0.06);
+    --text: #1d2024;
+    --muted: #72767e;
+    --border: #e2e4e8;
+    --line: #d6d9de;
+    --accent: #d8641c;
+    --accent-bg: #fdece0;
+    --accent-text: #a84813;
+    --shadow: 0 1px 3px rgba(20, 20, 30, 0.07);
   }
   @media (prefers-color-scheme: dark) {
-    :root {
-      --bg: #101214;
-      --card-bg: #1a1d21;
+    :root:not([data-theme="light"]) {
+      --bg: #15171b;
+      --card-bg: #1d2025;
       --text: #edeef0;
-      --muted: #8b9099;
-      --border: #2a2e33;
-      --line: #333840;
-      --accent: #2dd4a7;
-      --accent-bg: #133128;
-      --accent-text: #4fe3bb;
-      --shadow: 0 1px 4px rgba(0, 0, 0, 0.4);
+      --muted: #9a9fa7;
+      --border: #2b2e34;
+      --line: #383c43;
+      --accent: #ff8c46;
+      --accent-bg: #3a2515;
+      --accent-text: #ffb37e;
+      --shadow: 0 1px 4px rgba(0, 0, 0, 0.5);
     }
+  }
+  :root[data-theme="dark"] {
+    --bg: #15171b;
+    --card-bg: #1d2025;
+    --text: #edeef0;
+    --muted: #9a9fa7;
+    --border: #2b2e34;
+    --line: #383c43;
+    --accent: #ff8c46;
+    --accent-bg: #3a2515;
+    --accent-text: #ffb37e;
+    --shadow: 0 1px 4px rgba(0, 0, 0, 0.5);
   }
   * { box-sizing: border-box; }
   body {
@@ -40,6 +53,7 @@
     padding-top: env(safe-area-inset-top, 0px);
     padding-bottom: env(safe-area-inset-bottom, 0px);
   }
+  .mono { font-family: "IBM Plex Mono", ui-monospace, "SF Mono", Menlo, monospace; }
   .app {
     max-width: 480px;
     margin: 0 auto;
@@ -63,6 +77,7 @@
     font-size: 17px;
     margin: 0;
     font-weight: 700;
+    letter-spacing: -0.01em;
   }
   .clock {
     font-size: 12px;
@@ -228,7 +243,7 @@
   <header>
     <div class="title-row">
       <h1>제주 교육여행 일정</h1>
-      <span class="clock" id="clock"></span>
+      <span class="clock mono" id="clock"></span>
     </div>
     <div class="tabs" id="tabs"></div>
   </header>
@@ -375,7 +390,7 @@ function renderTabs() {
   DAYS.forEach((day, i) => {
     const btn = document.createElement("div");
     btn.className = "tab" + (i === activeIndex ? " active" : "") + (day.date === t ? " today" : "");
-    btn.innerHTML = `<span class="d">DAY ${i + 1}</span>${labelFor(day.date)}`;
+    btn.innerHTML = `<span class="d mono">DAY ${i + 1}</span>${labelFor(day.date)}`;
     btn.addEventListener("click", () => {
       activeIndex = i;
       renderTabs();
@@ -413,7 +428,7 @@ function renderDay() {
 
     const hasDetail = !!it.detail;
     li.innerHTML = `
-      <div class="time-col">
+      <div class="time-col mono">
         <span class="st">${it.start}</span>
         ${it.end ? `<span class="et">${it.end}</span>` : ""}
       </div>
