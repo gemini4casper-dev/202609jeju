@@ -205,17 +205,63 @@
     transform: rotate(45deg);
     transition: transform 0.2s ease;
   }
+  .detail-wrap {
+    max-height: 0;
+    overflow: hidden;
+    transition: max-height 0.3s ease;
+  }
   .detail {
     font-size: 12px;
     color: var(--muted);
     margin-top: 6px;
     line-height: 1.5;
-    max-height: 0;
-    overflow: hidden;
-    transition: max-height 0.25s ease;
   }
-  li.item.open .detail { max-height: 200px; }
+  li.item.open .detail-wrap { max-height: 560px; }
   li.item.open .chevron { transform: rotate(225deg); }
+
+  .place-photo {
+    position: relative;
+    width: 100%;
+    aspect-ratio: 16 / 9;
+    margin-top: 8px;
+    border-radius: 10px;
+    overflow: hidden;
+    background: var(--bg);
+  }
+  .place-photo img { width: 100%; height: 100%; object-fit: cover; display: block; }
+  .photo-fallback {
+    position: absolute;
+    inset: 0;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+    color: var(--muted);
+    background: linear-gradient(135deg, var(--border), var(--bg));
+  }
+  .photo-fallback svg { width: 26px; height: 26px; stroke: var(--muted); }
+  .photo-fallback span { font-size: 11px; }
+  .place-tag {
+    font-size: 11px;
+    font-weight: 600;
+    color: var(--accent-text);
+    margin-top: 8px;
+  }
+  .place-desc {
+    font-size: 12.5px;
+    color: var(--text);
+    line-height: 1.6;
+    margin: 6px 0 0;
+  }
+  .place-source {
+    display: inline-block;
+    font-size: 11px;
+    font-weight: 600;
+    color: var(--accent-text);
+    text-decoration: none;
+    margin-top: 8px;
+  }
 
   /* time-based states */
   li.item.past .content-col::before { border-color: var(--line); background: var(--line); }
@@ -260,6 +306,63 @@
 </div>
 
 <script>
+const PLACES = {
+  gwandeokjeong: {
+    img: "images/gwandeokjeong.jpg",
+    desc: "조선시대 제주를 다스리던 행정관청 터로, 일제강점기에 훼철되었다가 1990년대 발굴조사를 거쳐 복원되었다. 1993년 사적으로 지정되었으며, 옆에 있는 관덕정은 1448년 세워진 누각으로 현존하는 관덕정 건물 중 가장 오래되고 원형이 잘 남아 있다.",
+    source: "https://ko.wikipedia.org/wiki/제주목_관아",
+    sourceLabel: "위키백과"
+  },
+  hangpaduri: {
+    img: "images/hangpaduri.jpg",
+    desc: "고려 말 몽골에 끝까지 저항한 삼별초가 김통정 장군의 지휘로 흙 토성을 쌓고 1273년까지 항쟁을 이어간 곳으로, 사적 제396호다. 유적전시관과 항몽순의비, 옛 토성 일부가 남아 있고, 봄철엔 유채꽃과 벚꽃이 어우러지는 명소이기도 하다.",
+    source: "https://ko.wikipedia.org/wiki/제주_항파두리_항몽_유적",
+    sourceLabel: "위키백과"
+  },
+  hyeopjae: {
+    img: "images/hyeopjae-beach.jpg",
+    desc: "흰 모래사장과 코발트빛 바다, 바다 건너 보이는 비양도 풍경이 어우러진 해변이다. 수심이 얕고 경사가 완만해 가족 단위 물놀이에 적합하며, 비양도 너머로 지는 노을이 특히 아름답기로 알려져 있다.",
+    source: "https://www.visitjeju.net/kr/detail/view?contentsid=CONT_000000000500697",
+    sourceLabel: "비짓제주"
+  },
+  arte: {
+    img: "images/arte-museum.jpg",
+    desc: "스피커 공장 건물을 리모델링한 몰입형 미디어아트 전시관으로, 최대 높이 10m 벽면을 스크린 삼아 해변·파도·폭포·숲 등을 형상화한 대형 영상을 선보인다. '빛과 소리가 만드는 영원한 자연'을 주제로 시각·청각을 아우르는 체험을 제공한다.",
+    source: "https://www.visitjeju.net/kr/detail/view?contentsid=CNTS_200000000010958",
+    sourceLabel: "비짓제주"
+  },
+  aerospace: {
+    img: "images/aerospace-museum.jpg",
+    desc: "제주국제자유도시개발센터(JDC)가 운영하는 아시아 최대 규모의 항공우주 테마 박물관으로 2014년 개관했다. 실제 항공기 등 기체 26대를 실내에 전시해 보존 상태가 좋고, 공군 역사와 비행 원리를 체험할 수 있는 전시로 구성돼 있다.",
+    source: "https://ko.wikipedia.org/wiki/제주항공우주박물관",
+    sourceLabel: "위키백과"
+  },
+  waterpark: {
+    img: "images/shinhwa-waterpark.jpg",
+    desc: "제주신화월드 리조트 단지 안에 있는 제주 최대급 워터파크로, 19종 이상의 물놀이 어트랙션을 운영한다. 대형 실내존을 갖춰 사계절 이용할 수 있고, 어린이 키즈존부터 성인용 스파 시설까지 폭넓게 갖춰져 있다.",
+    source: "https://namu.wiki/w/신화워터파크",
+    sourceLabel: "나무위키"
+  },
+  peacePark: {
+    img: "images/jeju43-peace-park.jpg",
+    desc: "1948년 발생한 제주 4·3사건의 희생자를 추모하고 진상을 알리기 위해 조성된 공원이다. 위령제단, 각명비, 봉안관, 4·3평화기념관 등이 자리해 있어 역사교육의 현장으로 활용된다.",
+    source: "https://ko.wikipedia.org/wiki/제주_4·3_평화공원",
+    sourceLabel: "위키백과"
+  },
+  folkMuseum: {
+    img: "images/folk-natural-history-museum.jpg",
+    desc: "1984년 개관한 종합 박물관으로, 화산섬 제주의 형성 과정과 자연생태, 제주 사람들의 생업·의식주 문화를 한 곳에서 살펴볼 수 있다. 한라산 식물의 수직분포와 곤충·포유류 표본, 로비의 참고래 골격 표본이 볼거리다.",
+    source: "https://ko.wikipedia.org/wiki/제주특별자치도민속자연사박물관",
+    sourceLabel: "위키백과"
+  },
+  nexon: {
+    img: "images/nexon-museum.jpg",
+    desc: "2013년 아시아 최초의 컴퓨터박물관으로 문을 연 뒤, 2026년 재단장을 거쳐 '넥슨뮤지엄'으로 이름을 바꿔 재개장했다. 컴퓨터·게임 역사 소장품 약 1만 6천여 점을 보유하며, 넥슨의 30년 게임 헤리티지를 소개하는 공간으로 성격이 확장됐다.",
+    source: "https://ko.wikipedia.org/wiki/넥슨컴퓨터박물관",
+    sourceLabel: "위키백과"
+  }
+};
+
 const DAYS = [
   {
     date: "2026-09-15",
@@ -272,15 +375,15 @@ const DAYS = [
       { start: "08:00", end: "08:20", title: "아침식사 장소 이동", detail: "공항 → 제주시내" },
       { start: "08:20", end: "09:05", title: "아침식사" },
       { start: "09:05", end: "09:15", title: "이동" },
-      { start: "09:15", end: "10:00", title: "제주목 관아·관덕정", detail: "제주 전통 행정·건축문화" },
+      { start: "09:15", end: "10:00", title: "제주목 관아·관덕정", detail: "제주 전통 행정·건축문화", place: PLACES.gwandeokjeong },
       { start: "10:00", end: "10:30", title: "항파두리 이동" },
-      { start: "10:30", end: "11:35", title: "항파두리 항몽유적지", detail: "삼별초·제주 역사, 유적 걷기" },
+      { start: "10:30", end: "11:35", title: "항파두리 항몽유적지", detail: "삼별초·제주 역사, 유적 걷기", place: PLACES.hangpaduri },
       { start: "11:35", end: "12:00", title: "점심 장소 이동" },
       { start: "12:00", end: "13:00", title: "점심식사", detail: "충분한 휴식" },
       { start: "13:00", end: "13:30", title: "협재 이동" },
-      { start: "13:30", end: "14:20", title: "협재해수욕장 바닷가 걷기", detail: "현무암·은모래·비양도 관찰" },
+      { start: "13:30", end: "14:20", title: "협재해수욕장 바닷가 걷기", detail: "현무암·은모래·비양도 관찰", place: PLACES.hyeopjae },
       { start: "14:20", end: "14:45", title: "아르떼뮤지엄 이동" },
-      { start: "14:45", end: "16:45", title: "아르떼뮤지엄 제주" },
+      { start: "14:45", end: "16:45", title: "아르떼뮤지엄 제주", place: PLACES.arte },
       { start: "16:45", end: "17:05", title: "숙소 이동" },
       { start: "17:05", end: "18:00", title: "제주유스호스텔 체크인·휴식", detail: "객실배정·짐 정리 · 제주시 애월읍 방축길 128" },
       { start: "18:00", end: "19:00", title: "저녁식사" },
@@ -300,11 +403,11 @@ const DAYS = [
       { start: "09:00", end: "09:15", title: "준비·인원점검", detail: "수영 준비물 확인" },
       { start: "09:15", end: "09:50", title: "항공우주박물관 이동" },
       { start: "09:50", end: "10:00", title: "입장 준비" },
-      { start: "10:00", end: "12:20", title: "제주항공우주박물관 체험", detail: "항공·우주·과학" },
+      { start: "10:00", end: "12:20", title: "제주항공우주박물관 체험", detail: "항공·우주·과학", place: PLACES.aerospace },
       { start: "12:20", end: "13:20", title: "점심식사", detail: "박물관 인근" },
       { start: "13:20", end: "13:35", title: "이동", detail: "신화월드권" },
       { start: "13:35", end: "14:00", title: "워터파크 입장·탈의·안전교육", detail: "버디조 확인" },
-      { start: "14:00", end: "18:00", title: "신화워터파크" },
+      { start: "14:00", end: "18:00", title: "신화워터파크", place: PLACES.waterpark },
       { start: "18:00", end: "18:35", title: "샤워·환복·드라이" },
       { start: "18:35", end: "19:30", title: "저녁식사", detail: "신화월드 인근이 효율적" },
       { start: "19:30", end: "20:10", title: "유스호스텔 이동" },
@@ -324,13 +427,13 @@ const DAYS = [
       { start: "08:45", title: "유스호스텔 출발" },
       { start: "08:45", end: "09:40", title: "4·3평화공원 이동" },
       { start: "09:40", end: "10:00", title: "화장실·오리엔테이션" },
-      { start: "10:00", end: "11:00", title: "제주 4.3평화공원 해설 관람" },
+      { start: "10:00", end: "11:00", title: "제주 4.3평화공원 해설 관람", place: PLACES.peacePark },
       { start: "11:00", end: "11:15", title: "위령공간·정리", detail: "조용한 마무리" },
       { start: "11:15", end: "11:40", title: "민속자연사박물관 이동" },
-      { start: "11:40", end: "12:40", title: "제주특별자치도 민속자연사박물관", detail: "제주 화산·생태·생활문화" },
+      { start: "11:40", end: "12:40", title: "제주특별자치도 민속자연사박물관", detail: "제주 화산·생태·생활문화", place: PLACES.folkMuseum },
       { start: "12:45", end: "13:45", title: "점심식사", detail: "제주시내" },
       { start: "13:45", end: "14:05", title: "넥슨 이동" },
-      { start: "14:05", end: "16:15", title: "넥슨뮤지엄", detail: "컴퓨터·게임·디지털문화" },
+      { start: "14:05", end: "16:15", title: "넥슨뮤지엄", detail: "컴퓨터·게임·디지털문화", place: PLACES.nexon },
       { start: "16:15", end: "16:30", title: "집결·화장실" },
       { start: "16:30", end: "17:30", title: "이른 저녁식사", detail: "공항 이동 고려" },
       { start: "17:30", end: "17:55", title: "제주공항 이동" },
@@ -426,7 +529,25 @@ function renderDay() {
     li.dataset.start = it.start;
     li.dataset.end = it.effEnd;
 
-    const hasDetail = !!it.detail;
+    const hasDetail = !!it.detail || !!it.place;
+    let detailHtml = "";
+    if (it.place) {
+      detailHtml = `
+        <div class="place-photo">
+          <img src="${it.place.img}" alt="${it.title}" loading="lazy"
+               onerror="this.style.display='none'; this.nextElementSibling.hidden=false;">
+          <div class="photo-fallback" hidden>
+            <svg viewBox="0 0 24 24" fill="none" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="16" rx="2"></rect><circle cx="9" cy="10" r="1.7"></circle><path d="M21 16l-5.5-5.5a2 2 0 0 0-2.8 0L3 20"></path></svg>
+            <span>사진 준비 중</span>
+          </div>
+        </div>
+        ${it.detail ? `<div class="place-tag">${it.detail}</div>` : ""}
+        <p class="place-desc">${it.place.desc}</p>
+        <a class="place-source" href="${it.place.source}" target="_blank" rel="noopener noreferrer">${it.place.sourceLabel}에서 더 보기 ↗</a>
+      `;
+    } else if (it.detail) {
+      detailHtml = `<div class="detail">${it.detail}</div>`;
+    }
     li.innerHTML = `
       <div class="time-col mono">
         <span class="st">${it.start}</span>
@@ -439,7 +560,7 @@ function renderDay() {
             <span class="badge-now" hidden>진행중</span>
             ${hasDetail ? '<span class="chevron"></span>' : ""}
           </div>
-          ${hasDetail ? `<div class="detail">${it.detail}</div>` : ""}
+          ${hasDetail ? `<div class="detail-wrap">${detailHtml}</div>` : ""}
         </div>
       </div>
     `;
