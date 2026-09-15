@@ -1,0 +1,486 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>제주 교육여행 일정</title>
+<style>
+  :root {
+    --bg: #f5f6f8;
+    --card-bg: #ffffff;
+    --text: #1c1e21;
+    --muted: #8a8f98;
+    --border: #e4e6ea;
+    --line: #d8dbe0;
+    --accent: #0f9d78;
+    --accent-bg: #e6f7f1;
+    --accent-text: #0b7a5c;
+    --shadow: 0 1px 3px rgba(20, 20, 30, 0.06);
+  }
+  @media (prefers-color-scheme: dark) {
+    :root {
+      --bg: #101214;
+      --card-bg: #1a1d21;
+      --text: #edeef0;
+      --muted: #8b9099;
+      --border: #2a2e33;
+      --line: #333840;
+      --accent: #2dd4a7;
+      --accent-bg: #133128;
+      --accent-text: #4fe3bb;
+      --shadow: 0 1px 4px rgba(0, 0, 0, 0.4);
+    }
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    background: var(--bg);
+    color: var(--text);
+    font-family: -apple-system, BlinkMacSystemFont, "Apple SD Gothic Neo", "Segoe UI", Roboto, "Noto Sans KR", sans-serif;
+    padding-top: env(safe-area-inset-top, 0px);
+    padding-bottom: env(safe-area-inset-bottom, 0px);
+  }
+  .app {
+    max-width: 480px;
+    margin: 0 auto;
+    min-height: 100vh;
+    padding: 0 16px 32px;
+  }
+  header {
+    position: sticky;
+    top: env(safe-area-inset-top, 0px);
+    z-index: 10;
+    background: var(--bg);
+    padding: 14px 0 8px;
+  }
+  .title-row {
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+    gap: 8px;
+  }
+  h1 {
+    font-size: 17px;
+    margin: 0;
+    font-weight: 700;
+  }
+  .clock {
+    font-size: 12px;
+    color: var(--muted);
+    white-space: nowrap;
+  }
+  .tabs {
+    display: flex;
+    gap: 8px;
+    margin-top: 12px;
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+    scrollbar-width: none;
+  }
+  .tabs::-webkit-scrollbar { display: none; }
+  .tab {
+    flex: 1 0 auto;
+    text-align: center;
+    padding: 10px 14px;
+    border-radius: 12px;
+    border: 1px solid var(--border);
+    background: var(--card-bg);
+    color: var(--muted);
+    font-size: 13px;
+    font-weight: 600;
+    cursor: pointer;
+  }
+  .tab .d { display: block; font-size: 11px; font-weight: 500; margin-bottom: 2px; opacity: 0.8; }
+  .tab.active {
+    background: var(--accent);
+    border-color: var(--accent);
+    color: #ffffff;
+  }
+  .tab.today:not(.active) {
+    border-color: var(--accent);
+    color: var(--accent-text);
+  }
+  .theme-banner {
+    margin-top: 14px;
+    padding: 12px 14px;
+    background: var(--accent-bg);
+    border-radius: 12px;
+    color: var(--accent-text);
+  }
+  .theme-banner .t { font-size: 14px; font-weight: 700; }
+  .theme-banner .s { font-size: 12px; margin-top: 2px; opacity: 0.9; }
+  .day-note {
+    margin-top: 10px;
+    font-size: 12px;
+    color: var(--muted);
+    padding: 0 2px;
+  }
+  ul.timeline {
+    list-style: none;
+    margin: 18px 0 0;
+    padding: 0;
+  }
+  li.item {
+    display: flex;
+    align-items: stretch;
+  }
+  .time-col {
+    flex: 0 0 56px;
+    text-align: right;
+    padding-right: 10px;
+    padding-top: 12px;
+    font-variant-numeric: tabular-nums;
+  }
+  .time-col .st { font-size: 13px; font-weight: 700; }
+  .time-col .et { display: block; font-size: 10px; color: var(--muted); margin-top: 1px; }
+  .content-col {
+    flex: 1 1 auto;
+    position: relative;
+    border-left: 2px solid var(--line);
+    padding: 8px 0 20px 16px;
+  }
+  li.item:last-child .content-col { padding-bottom: 4px; }
+  .content-col::before {
+    content: "";
+    position: absolute;
+    left: -7px;
+    top: 16px;
+    width: 12px;
+    height: 12px;
+    border-radius: 50%;
+    background: var(--card-bg);
+    border: 2px solid var(--line);
+  }
+  .card {
+    background: var(--card-bg);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    box-shadow: var(--shadow);
+    padding: 10px 12px;
+  }
+  .card-head {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 8px;
+    cursor: default;
+  }
+  .card-head.clickable { cursor: pointer; }
+  .card-title {
+    font-size: 14px;
+    font-weight: 600;
+    line-height: 1.4;
+  }
+  .badge-now {
+    flex: 0 0 auto;
+    font-size: 10px;
+    font-weight: 700;
+    color: #ffffff;
+    background: var(--accent);
+    border-radius: 999px;
+    padding: 2px 8px;
+  }
+  .chevron {
+    flex: 0 0 auto;
+    width: 7px;
+    height: 7px;
+    margin-right: 2px;
+    border-right: 2px solid var(--muted);
+    border-bottom: 2px solid var(--muted);
+    transform: rotate(45deg);
+    transition: transform 0.2s ease;
+  }
+  .detail {
+    font-size: 12px;
+    color: var(--muted);
+    margin-top: 6px;
+    line-height: 1.5;
+    max-height: 0;
+    overflow: hidden;
+    transition: max-height 0.25s ease;
+  }
+  li.item.open .detail { max-height: 200px; }
+  li.item.open .chevron { transform: rotate(225deg); }
+
+  /* time-based states */
+  li.item.past .content-col::before { border-color: var(--line); background: var(--line); }
+  li.item.past .card { opacity: 0.55; }
+  li.item.past .time-col { opacity: 0.55; }
+
+  li.item.current .content-col { border-left-color: var(--accent); }
+  li.item.current .content-col::before { border-color: var(--accent); background: var(--accent); box-shadow: 0 0 0 4px var(--accent-bg); }
+  li.item.current .card { border-color: var(--accent); background: var(--accent-bg); }
+  li.item.current .time-col .st { color: var(--accent-text); }
+
+  li.item.future .content-col::before { background: var(--card-bg); border-color: var(--line); }
+
+  footer {
+    margin-top: 24px;
+    font-size: 11px;
+    color: var(--muted);
+    text-align: center;
+    line-height: 1.6;
+  }
+</style>
+</head>
+<body>
+<div class="app">
+  <header>
+    <div class="title-row">
+      <h1>제주 교육여행 일정</h1>
+      <span class="clock" id="clock"></span>
+    </div>
+    <div class="tabs" id="tabs"></div>
+  </header>
+  <div class="theme-banner" id="themeBanner" hidden>
+    <div class="t" id="themeTitle"></div>
+    <div class="s" id="themeSub"></div>
+  </div>
+  <div class="day-note" id="dayNote"></div>
+  <ul class="timeline" id="timeline"></ul>
+  <footer>
+    숙소: 제주유스호스텔<br>
+    제주특별자치도 제주시 애월읍 방축길 128
+  </footer>
+</div>
+
+<script>
+const DAYS = [
+  {
+    date: "2026-09-15",
+    theme: "제주의 역사에서 바다와 예술로",
+    subtitle: "교육주제 「제주의 시간과 바다를 만나다」",
+    items: [
+      { start: "05:00", title: "김포공항 집결", detail: "학생·신분확인서류 최종 점검" },
+      { start: "06:00", end: "06:30", title: "제주행 항공편 탑승", detail: "기존 항공편 유지" },
+      { start: "07:30", end: "08:00", title: "제주공항 도착", detail: "수하물 수령·화장실·인원점검" },
+      { start: "08:00", end: "08:20", title: "아침식사 장소 이동", detail: "공항 → 제주시내" },
+      { start: "08:20", end: "09:05", title: "아침식사" },
+      { start: "09:05", end: "09:15", title: "이동" },
+      { start: "09:15", end: "10:00", title: "제주목 관아·관덕정", detail: "제주 전통 행정·건축문화" },
+      { start: "10:00", end: "10:30", title: "항파두리 이동" },
+      { start: "10:30", end: "11:35", title: "항파두리 항몽유적지", detail: "삼별초·제주 역사, 유적 걷기" },
+      { start: "11:35", end: "12:00", title: "점심 장소 이동" },
+      { start: "12:00", end: "13:00", title: "점심식사", detail: "충분한 휴식" },
+      { start: "13:00", end: "13:30", title: "협재 이동" },
+      { start: "13:30", end: "14:20", title: "협재해수욕장 바닷가 걷기", detail: "현무암·은모래·비양도 관찰" },
+      { start: "14:20", end: "14:45", title: "아르떼뮤지엄 이동" },
+      { start: "14:45", end: "16:45", title: "아르떼뮤지엄 제주" },
+      { start: "16:45", end: "17:05", title: "숙소 이동" },
+      { start: "17:05", end: "18:00", title: "제주유스호스텔 체크인·휴식", detail: "객실배정·짐 정리 · 제주시 애월읍 방축길 128" },
+      { start: "18:00", end: "19:00", title: "저녁식사" },
+      { start: "19:00", end: "19:30", title: "하루 나눔·간단한 활동" },
+      { start: "19:30", end: "21:00", title: "샤워·개인정비·휴식" },
+      { start: "21:30", title: "취침" }
+    ]
+  },
+  {
+    date: "2026-09-16",
+    theme: "과학과 도전, 그리고 친구들과의 즐거움",
+    subtitle: "교육주제 「한계를 넘어 도전하다」",
+    items: [
+      { start: "07:20", title: "기상" },
+      { start: "07:20", end: "07:50", title: "세면·객실정리" },
+      { start: "08:00", end: "09:00", title: "아침식사", detail: "유스호스텔" },
+      { start: "09:00", end: "09:15", title: "준비·인원점검", detail: "수영 준비물 확인" },
+      { start: "09:15", end: "09:50", title: "항공우주박물관 이동" },
+      { start: "09:50", end: "10:00", title: "입장 준비" },
+      { start: "10:00", end: "12:20", title: "제주항공우주박물관 체험", detail: "항공·우주·과학" },
+      { start: "12:20", end: "13:20", title: "점심식사", detail: "박물관 인근" },
+      { start: "13:20", end: "13:35", title: "이동", detail: "신화월드권" },
+      { start: "13:35", end: "14:00", title: "워터파크 입장·탈의·안전교육", detail: "버디조 확인" },
+      { start: "14:00", end: "18:00", title: "신화워터파크" },
+      { start: "18:00", end: "18:35", title: "샤워·환복·드라이" },
+      { start: "18:35", end: "19:30", title: "저녁식사", detail: "신화월드 인근이 효율적" },
+      { start: "19:30", end: "20:10", title: "유스호스텔 이동" },
+      { start: "20:10", end: "20:30", title: "인원·건강 상태 확인" },
+      { start: "20:30", end: "21:20", title: "개인정비·휴식" },
+      { start: "21:30", title: "취침" }
+    ]
+  },
+  {
+    date: "2026-09-17",
+    theme: "",
+    subtitle: "",
+    items: [
+      { start: "07:00", title: "기상·짐 정리", detail: "체크아웃 준비" },
+      { start: "07:40", end: "08:30", title: "아침식사" },
+      { start: "08:30", end: "08:45", title: "객실점검·버스 적재", detail: "분실물 확인" },
+      { start: "08:45", title: "유스호스텔 출발" },
+      { start: "08:45", end: "09:40", title: "4·3평화공원 이동" },
+      { start: "09:40", end: "10:00", title: "화장실·오리엔테이션" },
+      { start: "10:00", end: "11:00", title: "제주 4.3평화공원 해설 관람" },
+      { start: "11:00", end: "11:15", title: "위령공간·정리", detail: "조용한 마무리" },
+      { start: "11:15", end: "11:40", title: "민속자연사박물관 이동" },
+      { start: "11:40", end: "12:40", title: "제주특별자치도 민속자연사박물관", detail: "제주 화산·생태·생활문화" },
+      { start: "12:45", end: "13:45", title: "점심식사", detail: "제주시내" },
+      { start: "13:45", end: "14:05", title: "넥슨 이동" },
+      { start: "14:05", end: "16:15", title: "넥슨뮤지엄", detail: "컴퓨터·게임·디지털문화" },
+      { start: "16:15", end: "16:30", title: "집결·화장실" },
+      { start: "16:30", end: "17:30", title: "이른 저녁식사", detail: "공항 이동 고려" },
+      { start: "17:30", end: "17:55", title: "제주공항 이동" },
+      { start: "18:00", title: "제주공항 도착", detail: "단체 수속·수하물 (18:00 전후)" },
+      { start: "18:00", end: "19:10", title: "탑승수속·보안검색·휴식" },
+      { start: "19:10", end: "19:35", title: "게이트 이동·탑승준비" },
+      { start: "19:55", title: "제주 → 김포 출발", detail: "기존 항공 (19:55 또는 20:05)" },
+      { start: "21:10", title: "김포공항 도착 예정", detail: "21:10 또는 21:20" }
+    ]
+  }
+];
+
+const WEEKDAY = ["일", "월", "화", "수", "목", "금", "토"];
+
+function toDateObj(dateStr) {
+  const [y, m, d] = dateStr.split("-").map(Number);
+  return new Date(y, m - 1, d);
+}
+
+function labelFor(dateStr) {
+  const d = toDateObj(dateStr);
+  return `${d.getMonth() + 1}/${d.getDate()} (${WEEKDAY[d.getDay()]})`;
+}
+
+function todayStr() {
+  const n = new Date();
+  return `${n.getFullYear()}-${String(n.getMonth() + 1).padStart(2, "0")}-${String(n.getDate()).padStart(2, "0")}`;
+}
+
+function nowHM() {
+  const n = new Date();
+  return `${String(n.getHours()).padStart(2, "0")}:${String(n.getMinutes()).padStart(2, "0")}`;
+}
+
+function pickInitialDayIndex() {
+  const t = todayStr();
+  const idx = DAYS.findIndex(d => d.date === t);
+  if (idx !== -1) return idx;
+  if (t < DAYS[0].date) return 0;
+  if (t > DAYS[DAYS.length - 1].date) return DAYS.length - 1;
+  return 0;
+}
+
+let activeIndex = pickInitialDayIndex();
+
+function withEffectiveEnd(items) {
+  return items.map((it, i) => {
+    const end = it.end || (items[i + 1] ? items[i + 1].start : "23:59");
+    return { ...it, effEnd: end };
+  });
+}
+
+function renderTabs() {
+  const tabs = document.getElementById("tabs");
+  const t = todayStr();
+  tabs.innerHTML = "";
+  DAYS.forEach((day, i) => {
+    const btn = document.createElement("div");
+    btn.className = "tab" + (i === activeIndex ? " active" : "") + (day.date === t ? " today" : "");
+    btn.innerHTML = `<span class="d">DAY ${i + 1}</span>${labelFor(day.date)}`;
+    btn.addEventListener("click", () => {
+      activeIndex = i;
+      renderTabs();
+      renderDay();
+    });
+    tabs.appendChild(btn);
+  });
+}
+
+function renderDay() {
+  const day = DAYS[activeIndex];
+  const banner = document.getElementById("themeBanner");
+  if (day.theme) {
+    banner.hidden = false;
+    document.getElementById("themeTitle").textContent = day.theme;
+    document.getElementById("themeSub").textContent = day.subtitle;
+  } else {
+    banner.hidden = true;
+  }
+
+  const note = document.getElementById("dayNote");
+  const t = todayStr();
+  if (day.date < t) note.textContent = "지난 일정입니다";
+  else if (day.date > t) note.textContent = "예정된 일정입니다";
+  else note.textContent = "오늘 일정입니다";
+
+  const items = withEffectiveEnd(day.items);
+  const ul = document.getElementById("timeline");
+  ul.innerHTML = "";
+  items.forEach((it, i) => {
+    const li = document.createElement("li");
+    li.className = "item";
+    li.dataset.start = it.start;
+    li.dataset.end = it.effEnd;
+
+    const hasDetail = !!it.detail;
+    li.innerHTML = `
+      <div class="time-col">
+        <span class="st">${it.start}</span>
+        ${it.end ? `<span class="et">${it.end}</span>` : ""}
+      </div>
+      <div class="content-col">
+        <div class="card">
+          <div class="card-head${hasDetail ? " clickable" : ""}">
+            <span class="card-title">${it.title}</span>
+            <span class="badge-now" hidden>진행중</span>
+            ${hasDetail ? '<span class="chevron"></span>' : ""}
+          </div>
+          ${hasDetail ? `<div class="detail">${it.detail}</div>` : ""}
+        </div>
+      </div>
+    `;
+    if (hasDetail) {
+      li.querySelector(".card-head").addEventListener("click", () => {
+        li.classList.toggle("open");
+      });
+    }
+    ul.appendChild(li);
+  });
+
+  updateHighlights();
+}
+
+function updateHighlights() {
+  const day = DAYS[activeIndex];
+  const t = todayStr();
+  const isToday = day.date === t;
+  const now = nowHM();
+  const lis = document.querySelectorAll("#timeline li.item");
+  lis.forEach(li => {
+    li.classList.remove("past", "current", "future");
+    const badge = li.querySelector(".badge-now");
+    if (!isToday) {
+      li.classList.add(day.date < t ? "past" : "future");
+      badge.hidden = true;
+      return;
+    }
+    const start = li.dataset.start;
+    const end = li.dataset.end;
+    if (now < start) {
+      li.classList.add("future");
+      badge.hidden = true;
+    } else if (now >= end) {
+      li.classList.add("past");
+      badge.hidden = true;
+    } else {
+      li.classList.add("current");
+      badge.hidden = false;
+    }
+  });
+}
+
+function updateClock() {
+  const n = new Date();
+  document.getElementById("clock").textContent =
+    `${labelFor(todayStr())} ${String(n.getHours()).padStart(2, "0")}:${String(n.getMinutes()).padStart(2, "0")}`;
+}
+
+renderTabs();
+renderDay();
+updateClock();
+setInterval(() => {
+  updateClock();
+  updateHighlights();
+}, 15000);
+</script>
+</body>
+</html>
