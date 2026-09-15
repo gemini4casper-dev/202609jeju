@@ -112,13 +112,7 @@
     cursor: pointer;
   }
   .refresh-btn:active { background: var(--accent-bg); color: var(--accent-text); border-color: var(--accent); }
-  .refresh-btn svg {
-    width: 12px;
-    height: 12px;
-    stroke: currentColor;
-    transition: transform 0.5s ease;
-  }
-  .refresh-btn.spin svg { transform: rotate(360deg); }
+  .refresh-btn svg { width: 12px; height: 12px; stroke: currentColor; }
   .tab {
     flex: 1 0 auto;
     text-align: center;
@@ -245,29 +239,77 @@
   li.item.open .detail-wrap { max-height: 560px; }
   li.item.open .chevron { transform: rotate(225deg); }
 
-  .place-photo {
-    position: relative;
-    width: 100%;
-    aspect-ratio: 16 / 9;
+  .photo-view-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
     margin-top: 8px;
-    border-radius: 10px;
-    overflow: hidden;
+    padding: 7px 12px;
+    border-radius: 8px;
+    border: 1px solid var(--border);
     background: var(--bg);
+    color: var(--accent-text);
+    font-size: 12px;
+    font-weight: 600;
+    cursor: pointer;
   }
-  .place-photo img { width: 100%; height: 100%; object-fit: cover; display: block; }
-  .photo-fallback {
-    position: absolute;
+  .photo-view-btn svg { width: 13px; height: 13px; stroke: currentColor; }
+
+  .photo-modal-backdrop {
+    position: fixed;
     inset: 0;
+    z-index: 200;
+    background: rgba(10, 10, 12, 0.6);
     display: flex;
-    flex-direction: column;
     align-items: center;
     justify-content: center;
-    gap: 6px;
-    color: var(--muted);
-    background: linear-gradient(135deg, var(--border), var(--bg));
+    padding: 24px;
   }
-  .photo-fallback svg { width: 26px; height: 26px; stroke: var(--muted); }
-  .photo-fallback span { font-size: 11px; }
+  .photo-modal {
+    position: relative;
+    width: 50vw;
+    min-width: 220px;
+    max-width: 420px;
+    background: var(--card-bg);
+    border-radius: 14px;
+    overflow: hidden;
+    box-shadow: 0 8px 30px rgba(0, 0, 0, 0.35);
+  }
+  .photo-modal img {
+    display: block;
+    width: 100%;
+    max-height: 70vh;
+    object-fit: contain;
+    background: var(--bg);
+  }
+  .photo-modal .modal-title {
+    font-size: 12px;
+    font-weight: 600;
+    padding: 8px 10px;
+    color: var(--text);
+    border-top: 1px solid var(--border);
+  }
+  .photo-modal .modal-fallback {
+    padding: 30px 12px;
+    text-align: center;
+    font-size: 12px;
+    color: var(--muted);
+  }
+  .photo-modal-close {
+    position: absolute;
+    top: 6px;
+    right: 6px;
+    width: 26px;
+    height: 26px;
+    border-radius: 50%;
+    border: none;
+    background: rgba(0, 0, 0, 0.55);
+    color: #fff;
+    font-size: 14px;
+    line-height: 1;
+    cursor: pointer;
+    z-index: 1;
+  }
   .place-tag {
     font-size: 11px;
     font-weight: 600;
@@ -335,6 +377,14 @@
     숙소: 제주유스호스텔<br>
     제주특별자치도 제주시 애월읍 방축길 128
   </footer>
+</div>
+
+<div class="photo-modal-backdrop" id="photoModalBackdrop" hidden>
+  <div class="photo-modal">
+    <button class="photo-modal-close" id="photoModalClose" type="button" aria-label="닫기">✕</button>
+    <img id="photoModalImg" src="" alt="" onerror="handleModalImgError(this)">
+    <div class="modal-title" id="photoModalTitle"></div>
+  </div>
 </div>
 
 <script>
@@ -565,15 +615,10 @@ function renderDay() {
     let detailHtml = "";
     if (it.place) {
       detailHtml = `
-        <div class="place-photo">
-          <img src="${it.place.img}" data-base="${it.place.img}" alt="${it.title}"
-               onerror="handlePhotoError(this)">
-          <div class="photo-fallback" hidden>
-            <svg viewBox="0 0 24 24" fill="none" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="16" rx="2"></rect><circle cx="9" cy="10" r="1.7"></circle><path d="M21 16l-5.5-5.5a2 2 0 0 0-2.8 0L3 20"></path></svg>
-            <span>사진 준비 중</span>
-            <span class="dbg mono" style="font-size:9px; word-break:break-all; padding:0 12px; opacity:0.6;"></span>
-          </div>
-        </div>
+        <button type="button" class="photo-view-btn" data-img="${it.place.img}" data-title="${it.title}">
+          <svg viewBox="0 0 24 24" fill="none" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="16" rx="2"></rect><circle cx="9" cy="10" r="1.7"></circle><path d="M21 16l-5.5-5.5a2 2 0 0 0-2.8 0L3 20"></path></svg>
+          사진 보기
+        </button>
         ${it.detail ? `<div class="place-tag">${it.detail}</div>` : ""}
         <p class="place-desc">${it.place.desc}</p>
         <a class="place-source" href="${it.place.source}" target="_blank" rel="noopener noreferrer">${it.place.sourceLabel}에서 더 보기 ↗</a>
@@ -602,11 +647,61 @@ function renderDay() {
         li.classList.toggle("open");
       });
     }
+    const photoBtn = li.querySelector(".photo-view-btn");
+    if (photoBtn) {
+      photoBtn.addEventListener("click", () => {
+        openPhotoModal(photoBtn.dataset.img, photoBtn.dataset.title);
+      });
+    }
     ul.appendChild(li);
   });
 
   updateHighlights();
 }
+
+function openPhotoModal(src, title) {
+  const backdrop = document.getElementById("photoModalBackdrop");
+  const img = document.getElementById("photoModalImg");
+  const titleEl = document.getElementById("photoModalTitle");
+  img.hidden = false;
+  const old = document.getElementById("photoModalFallback");
+  if (old) old.remove();
+  img.dataset.tries = "0";
+  img.dataset.base = src;
+  img.src = src;
+  img.alt = title;
+  titleEl.textContent = title;
+  backdrop.hidden = false;
+}
+
+function closePhotoModal() {
+  document.getElementById("photoModalBackdrop").hidden = true;
+  document.getElementById("photoModalImg").src = "";
+}
+
+function handleModalImgError(img) {
+  const tries = Number(img.dataset.tries || "0");
+  if (tries < 2) {
+    img.dataset.tries = String(tries + 1);
+    const base = img.dataset.base;
+    const sep = base.includes("?") ? "&" : "?";
+    setTimeout(() => { img.src = base + sep + "retry=" + Date.now(); }, 400 * (tries + 1));
+    return;
+  }
+  img.hidden = true;
+  if (!document.getElementById("photoModalFallback")) {
+    const div = document.createElement("div");
+    div.id = "photoModalFallback";
+    div.className = "modal-fallback";
+    div.textContent = "사진을 불러오지 못했습니다";
+    img.insertAdjacentElement("afterend", div);
+  }
+}
+
+document.getElementById("photoModalClose").addEventListener("click", closePhotoModal);
+document.getElementById("photoModalBackdrop").addEventListener("click", (e) => {
+  if (e.target.id === "photoModalBackdrop") closePhotoModal();
+});
 
 function updateHighlights() {
   const day = DAYS[activeIndex];
@@ -637,22 +732,6 @@ function updateHighlights() {
   });
 }
 
-function handlePhotoError(img) {
-  const tries = Number(img.dataset.tries || "0");
-  if (tries < 2) {
-    img.dataset.tries = String(tries + 1);
-    const base = img.dataset.base;
-    const sep = base.includes("?") ? "&" : "?";
-    setTimeout(() => { img.src = base + sep + "retry=" + Date.now(); }, 400 * (tries + 1));
-    return;
-  }
-  img.style.display = "none";
-  const fallback = img.nextElementSibling;
-  fallback.hidden = false;
-  const dbg = fallback.querySelector(".dbg");
-  if (dbg) dbg.textContent = img.src;
-}
-
 function updateClock() {
   const n = new Date();
   document.getElementById("clock").textContent =
@@ -660,14 +739,7 @@ function updateClock() {
 }
 
 document.getElementById("refreshBtn").addEventListener("click", () => {
-  activeIndex = pickInitialDayIndex();
-  renderTabs();
-  renderDay();
-  updateClock();
-  const btn = document.getElementById("refreshBtn");
-  btn.classList.remove("spin");
-  void btn.offsetWidth;
-  btn.classList.add("spin");
+  location.href = location.pathname + "?_=" + Date.now();
 });
 
 renderTabs();
