@@ -566,8 +566,8 @@ function renderDay() {
     if (it.place) {
       detailHtml = `
         <div class="place-photo">
-          <img src="${it.place.img}" alt="${it.title}"
-               onerror="this.style.display='none'; this.nextElementSibling.hidden=false; this.nextElementSibling.querySelector('.dbg').textContent=this.src;">
+          <img src="${it.place.img}" data-base="${it.place.img}" alt="${it.title}"
+               onerror="handlePhotoError(this)">
           <div class="photo-fallback" hidden>
             <svg viewBox="0 0 24 24" fill="none" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="16" rx="2"></rect><circle cx="9" cy="10" r="1.7"></circle><path d="M21 16l-5.5-5.5a2 2 0 0 0-2.8 0L3 20"></path></svg>
             <span>사진 준비 중</span>
@@ -635,6 +635,22 @@ function updateHighlights() {
       badge.hidden = false;
     }
   });
+}
+
+function handlePhotoError(img) {
+  const tries = Number(img.dataset.tries || "0");
+  if (tries < 2) {
+    img.dataset.tries = String(tries + 1);
+    const base = img.dataset.base;
+    const sep = base.includes("?") ? "&" : "?";
+    setTimeout(() => { img.src = base + sep + "retry=" + Date.now(); }, 400 * (tries + 1));
+    return;
+  }
+  img.style.display = "none";
+  const fallback = img.nextElementSibling;
+  fallback.hidden = false;
+  const dbg = fallback.querySelector(".dbg");
+  if (dbg) dbg.textContent = img.src;
 }
 
 function updateClock() {
