@@ -340,37 +340,37 @@
 <script>
 const PLACES = {
   gwandeokjeong: {
-    img: "https://commons.wikimedia.org/wiki/Special:FilePath/Gwandeokjeong_Pavilion_and_Jeju_Mok_Office_2.JPG",
+    img: "images/gwandeokjeong.jpg",
     desc: "조선시대 제주를 다스리던 행정관청 터로, 일제강점기에 훼철되었다가 1990년대 발굴조사를 거쳐 복원되었다. 1993년 사적으로 지정되었으며, 옆에 있는 관덕정은 1448년 세워진 누각으로 현존하는 관덕정 건물 중 가장 오래되고 원형이 잘 남아 있다.",
     source: "https://ko.wikipedia.org/wiki/제주목_관아",
     sourceLabel: "위키백과"
   },
   hangpaduri: {
-    img: "https://api.cdn.visitjeju.net/photomng/imgpath/201804/30/c38b3538-8ab8-49b6-b15f-903fff647b80.webp",
+    img: "images/hangpaduri.webp",
     desc: "고려 말 몽골에 끝까지 저항한 삼별초가 김통정 장군의 지휘로 흙 토성을 쌓고 1273년까지 항쟁을 이어간 곳으로, 사적 제396호다. 유적전시관과 항몽순의비, 옛 토성 일부가 남아 있고, 봄철엔 유채꽃과 벚꽃이 어우러지는 명소이기도 하다.",
     source: "https://ko.wikipedia.org/wiki/제주_항파두리_항몽_유적",
     sourceLabel: "위키백과"
   },
   hyeopjae: {
-    img: "https://api.cdn.visitjeju.net/photomng/imgpath/202408/27/fabdecc3-d63f-4ef8-a62c-a2542bc0eb59.jpg",
+    img: "images/hyeopjae-beach.jpg",
     desc: "흰 모래사장과 코발트빛 바다, 바다 건너 보이는 비양도 풍경이 어우러진 해변이다. 수심이 얕고 경사가 완만해 가족 단위 물놀이에 적합하며, 비양도 너머로 지는 노을이 특히 아름답기로 알려져 있다.",
     source: "https://www.visitjeju.net/kr/detail/view?contentsid=CONT_000000000500697",
     sourceLabel: "비짓제주"
   },
   arte: {
-    img: "https://api.cdn.visitjeju.net/photomng/imgpath/202608/24/7c3d6556-a3a8-4611-9b3c-2b67ed8b7526.jpg",
+    img: "images/arte-museum.jpg",
     desc: "스피커 공장 건물을 리모델링한 몰입형 미디어아트 전시관으로, 최대 높이 10m 벽면을 스크린 삼아 해변·파도·폭포·숲 등을 형상화한 대형 영상을 선보인다. '빛과 소리가 만드는 영원한 자연'을 주제로 시각·청각을 아우르는 체험을 제공한다.",
     source: "https://www.visitjeju.net/kr/detail/view?contentsid=CNTS_200000000010958",
     sourceLabel: "비짓제주"
   },
   aerospace: {
-    img: "https://thumb.wikimedia.org/wikipedia/commons/thumb/0/0d/Jeju_Aerospace_Museum_Aviation_Hall_20140606-01.JPG/1920px-Jeju_Aerospace_Museum_Aviation_Hall_20140606-01.JPG",
+    img: "images/aerospace-museum.jpg",
     desc: "제주국제자유도시개발센터(JDC)가 운영하는 아시아 최대 규모의 항공우주 테마 박물관으로 2014년 개관했다. 실제 항공기 등 기체 26대를 실내에 전시해 보존 상태가 좋고, 공군 역사와 비행 원리를 체험할 수 있는 전시로 구성돼 있다.",
     source: "https://ko.wikipedia.org/wiki/제주항공우주박물관",
     sourceLabel: "위키백과"
   },
   waterpark: {
-    img: "https://api.cdn.visitjeju.net/photomng/imgpath/201903/15/5a28d6f6-fb33-4634-bb9b-06f54b1ed69f.webp",
+    img: "images/shinhwa-waterpark.webp",
     desc: "제주신화월드 리조트 단지 안에 있는 제주 최대급 워터파크로, 19종 이상의 물놀이 어트랙션을 운영한다. 대형 실내존을 갖춰 사계절 이용할 수 있고, 어린이 키즈존부터 성인용 스파 시설까지 폭넓게 갖춰져 있다.",
     source: "https://namu.wiki/w/신화워터파크",
     sourceLabel: "나무위키"
@@ -382,13 +382,13 @@ const PLACES = {
     sourceLabel: "위키백과"
   },
   folkMuseum: {
-    img: "https://api.cdn.visitjeju.net/photomng/imgpath/202111/15/9cd09f11-8da6-4f15-a7f3-b50bbbc66037.webp",
+    img: "images/folk-natural-history-museum.webp",
     desc: "1984년 개관한 종합 박물관으로, 화산섬 제주의 형성 과정과 자연생태, 제주 사람들의 생업·의식주 문화를 한 곳에서 살펴볼 수 있다. 한라산 식물의 수직분포와 곤충·포유류 표본, 로비의 참고래 골격 표본이 볼거리다.",
     source: "https://ko.wikipedia.org/wiki/제주특별자치도민속자연사박물관",
     sourceLabel: "위키백과"
   },
   nexon: {
-    img: "https://commons.wikimedia.org/wiki/Special:FilePath/Nexon_Computer_Museum.jpg",
+    img: "images/nexon-museum.jpg",
     desc: "2013년 아시아 최초의 컴퓨터박물관으로 문을 연 뒤, 2026년 재단장을 거쳐 '넥슨뮤지엄'으로 이름을 바꿔 재개장했다. 컴퓨터·게임 역사 소장품 약 1만 6천여 점을 보유하며, 넥슨의 30년 게임 헤리티지를 소개하는 공간으로 성격이 확장됐다.",
     source: "https://ko.wikipedia.org/wiki/넥슨컴퓨터박물관",
     sourceLabel: "위키백과"
