@@ -382,7 +382,7 @@
 <div class="photo-modal-backdrop" id="photoModalBackdrop" hidden>
   <div class="photo-modal">
     <button class="photo-modal-close" id="photoModalClose" type="button" aria-label="닫기">✕</button>
-    <img id="photoModalImg" src="" alt="" onerror="handleModalImgError(this)">
+    <img id="photoModalImg" alt="">
     <div class="modal-title" id="photoModalTitle"></div>
   </div>
 </div>
@@ -663,11 +663,17 @@ function openPhotoModal(src, title) {
   const backdrop = document.getElementById("photoModalBackdrop");
   const img = document.getElementById("photoModalImg");
   const titleEl = document.getElementById("photoModalTitle");
-  img.hidden = false;
   const old = document.getElementById("photoModalFallback");
   if (old) old.remove();
-  img.dataset.tries = "0";
-  img.dataset.base = src;
+  img.hidden = false;
+  img.onerror = () => {
+    img.hidden = true;
+    const div = document.createElement("div");
+    div.id = "photoModalFallback";
+    div.className = "modal-fallback";
+    div.textContent = "사진을 불러오지 못했습니다";
+    img.insertAdjacentElement("afterend", div);
+  };
   img.src = src;
   img.alt = title;
   titleEl.textContent = title;
@@ -676,26 +682,7 @@ function openPhotoModal(src, title) {
 
 function closePhotoModal() {
   document.getElementById("photoModalBackdrop").hidden = true;
-  document.getElementById("photoModalImg").src = "";
-}
-
-function handleModalImgError(img) {
-  const tries = Number(img.dataset.tries || "0");
-  if (tries < 2) {
-    img.dataset.tries = String(tries + 1);
-    const base = img.dataset.base;
-    const sep = base.includes("?") ? "&" : "?";
-    setTimeout(() => { img.src = base + sep + "retry=" + Date.now(); }, 400 * (tries + 1));
-    return;
-  }
-  img.hidden = true;
-  if (!document.getElementById("photoModalFallback")) {
-    const div = document.createElement("div");
-    div.id = "photoModalFallback";
-    div.className = "modal-fallback";
-    div.textContent = "사진을 불러오지 못했습니다";
-    img.insertAdjacentElement("afterend", div);
-  }
+  document.getElementById("photoModalImg").removeAttribute("src");
 }
 
 document.getElementById("photoModalClose").addEventListener("click", closePhotoModal);
