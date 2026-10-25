@@ -1,0 +1,549 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>여행 일정 타임라인</title>
+<style>
+  /*
+    Token palette below is a neutral placeholder — before shipping, replace
+    --accent/--accent-bg/--accent-text (and their dark-mode twins) with a
+    color grounded in THIS trip's actual place/subject. See SKILL.md step 2.
+    Optionally also swap .mono's font-family for a typeface that fits the
+    subject, or delete .mono usages if nothing fits.
+  */
+  :root {
+    --bg: #f1f2f4;
+    --card-bg: #ffffff;
+    --text: #1d2024;
+    --muted: #72767e;
+    --border: #e2e4e8;
+    --line: #d6d9de;
+    --accent: #2563eb;
+    --accent-bg: #e8effe;
+    --accent-text: #1d4ed8;
+    --shadow: 0 1px 3px rgba(20, 20, 30, 0.07);
+  }
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+      --bg: #15171b;
+      --card-bg: #1d2025;
+      --text: #edeef0;
+      --muted: #9a9fa7;
+      --border: #2b2e34;
+      --line: #383c43;
+      --accent: #5b8def;
+      --accent-bg: #16233d;
+      --accent-text: #8fb4f6;
+      --shadow: 0 1px 4px rgba(0, 0, 0, 0.5);
+    }
+  }
+  :root[data-theme="dark"] {
+    --bg: #15171b;
+    --card-bg: #1d2025;
+    --text: #edeef0;
+    --muted: #9a9fa7;
+    --border: #2b2e34;
+    --line: #383c43;
+    --accent: #5b8def;
+    --accent-bg: #16233d;
+    --accent-text: #8fb4f6;
+    --shadow: 0 1px 4px rgba(0, 0, 0, 0.5);
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    background: var(--bg);
+    color: var(--text);
+    font-family: -apple-system, BlinkMacSystemFont, "Apple SD Gothic Neo", "Segoe UI", Roboto, "Noto Sans KR", sans-serif;
+    padding-top: env(safe-area-inset-top, 0px);
+    padding-bottom: env(safe-area-inset-bottom, 0px);
+  }
+  .mono { font-family: ui-monospace, "SF Mono", "IBM Plex Mono", Menlo, monospace; }
+  .app {
+    max-width: 480px;
+    margin: 0 auto;
+    min-height: 100vh;
+    padding: 0 16px 32px;
+  }
+  header {
+    position: sticky;
+    top: env(safe-area-inset-top, 0px);
+    z-index: 10;
+    background: var(--bg);
+    padding: 14px 0 8px;
+  }
+  .title-row {
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+    gap: 8px;
+  }
+  h1 {
+    font-size: 17px;
+    margin: 0;
+    font-weight: 700;
+    letter-spacing: -0.01em;
+  }
+  .clock {
+    font-size: 12px;
+    color: var(--muted);
+    white-space: nowrap;
+  }
+  .tabs {
+    display: flex;
+    gap: 8px;
+    margin-top: 12px;
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+    scrollbar-width: none;
+  }
+  .tabs::-webkit-scrollbar { display: none; }
+  .refresh-row {
+    display: flex;
+    justify-content: flex-end;
+    margin-top: 8px;
+  }
+  .refresh-btn {
+    display: flex;
+    align-items: center;
+    gap: 5px;
+    padding: 6px 12px;
+    border-radius: 999px;
+    border: 1px solid var(--border);
+    background: var(--card-bg);
+    color: var(--muted);
+    font-size: 11px;
+    font-weight: 600;
+    cursor: pointer;
+  }
+  .refresh-btn:active { background: var(--accent-bg); color: var(--accent-text); border-color: var(--accent); }
+  .refresh-btn svg { width: 12px; height: 12px; stroke: currentColor; }
+  .tab {
+    flex: 1 0 auto;
+    text-align: center;
+    padding: 10px 14px;
+    border-radius: 12px;
+    border: 1px solid var(--border);
+    background: var(--card-bg);
+    color: var(--muted);
+    font-size: 13px;
+    font-weight: 600;
+    cursor: pointer;
+  }
+  .tab .d { display: block; font-size: 11px; font-weight: 500; margin-bottom: 2px; opacity: 0.8; }
+  .tab.active {
+    background: var(--accent);
+    border-color: var(--accent);
+    color: #ffffff;
+  }
+  .tab.today:not(.active) {
+    border-color: var(--accent);
+    color: var(--accent-text);
+  }
+  .theme-banner {
+    margin-top: 14px;
+    padding: 12px 14px;
+    background: var(--accent-bg);
+    border-radius: 12px;
+    color: var(--accent-text);
+  }
+  .theme-banner .t { font-size: 14px; font-weight: 700; }
+  .theme-banner .s { font-size: 12px; margin-top: 2px; opacity: 0.9; }
+  .day-note {
+    margin-top: 10px;
+    font-size: 12px;
+    color: var(--muted);
+    padding: 0 2px;
+  }
+  ul.timeline {
+    list-style: none;
+    margin: 18px 0 0;
+    padding: 0;
+  }
+  li.item {
+    display: flex;
+    align-items: stretch;
+  }
+  .time-col {
+    flex: 0 0 56px;
+    text-align: right;
+    padding-right: 10px;
+    padding-top: 12px;
+    font-variant-numeric: tabular-nums;
+  }
+  .time-col .st { font-size: 13px; font-weight: 700; }
+  .time-col .et { display: block; font-size: 10px; color: var(--muted); margin-top: 1px; }
+  .content-col {
+    flex: 1 1 auto;
+    position: relative;
+    border-left: 2px solid var(--line);
+    padding: 8px 0 20px 16px;
+  }
+  li.item:last-child .content-col { padding-bottom: 4px; }
+  .content-col::before {
+    content: "";
+    position: absolute;
+    left: -7px;
+    top: 16px;
+    width: 12px;
+    height: 12px;
+    border-radius: 50%;
+    background: var(--card-bg);
+    border: 2px solid var(--line);
+  }
+  .card {
+    background: var(--card-bg);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    box-shadow: var(--shadow);
+    padding: 10px 12px;
+  }
+  .card-head {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 8px;
+    cursor: default;
+  }
+  .card-head.clickable { cursor: pointer; }
+  .card-title {
+    font-size: 14px;
+    font-weight: 600;
+    line-height: 1.4;
+  }
+  .badge-now {
+    flex: 0 0 auto;
+    font-size: 10px;
+    font-weight: 700;
+    color: #ffffff;
+    background: var(--accent);
+    border-radius: 999px;
+    padding: 2px 8px;
+  }
+  .chevron {
+    flex: 0 0 auto;
+    width: 7px;
+    height: 7px;
+    margin-right: 2px;
+    border-right: 2px solid var(--muted);
+    border-bottom: 2px solid var(--muted);
+    transform: rotate(45deg);
+    transition: transform 0.2s ease;
+  }
+  .detail-wrap {
+    max-height: 0;
+    overflow: hidden;
+    transition: max-height 0.3s ease;
+  }
+  .detail {
+    font-size: 12px;
+    color: var(--muted);
+    margin-top: 6px;
+    line-height: 1.5;
+  }
+  li.item.open .detail-wrap { max-height: 560px; }
+  li.item.open .chevron { transform: rotate(225deg); }
+
+  .place-photo {
+    position: relative;
+    width: 100%;
+    aspect-ratio: 16 / 9;
+    margin-top: 8px;
+    border-radius: 10px;
+    overflow: hidden;
+    background: var(--bg);
+  }
+  .place-photo img { width: 100%; height: 100%; object-fit: cover; display: block; }
+  .place-photo img[hidden] { display: none; }
+  .photo-fallback {
+    position: absolute;
+    inset: 0;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+    color: var(--muted);
+    background: linear-gradient(135deg, var(--border), var(--bg));
+  }
+  .photo-fallback[hidden] { display: none; }
+  .photo-fallback svg { width: 26px; height: 26px; stroke: var(--muted); }
+  .photo-fallback span { font-size: 11px; }
+  .place-tag {
+    font-size: 11px;
+    font-weight: 600;
+    color: var(--accent-text);
+    margin-top: 8px;
+  }
+  .place-desc {
+    font-size: 12.5px;
+    color: var(--text);
+    line-height: 1.6;
+    margin: 6px 0 0;
+  }
+  .place-source {
+    display: inline-block;
+    font-size: 11px;
+    font-weight: 600;
+    color: var(--accent-text);
+    text-decoration: none;
+    margin-top: 8px;
+  }
+
+  li.item.current .content-col { border-left-color: var(--accent); }
+  li.item.current .content-col::before { border-color: var(--accent); background: var(--accent); box-shadow: 0 0 0 4px var(--accent-bg); }
+  li.item.current .card { border-color: var(--accent); background: var(--accent-bg); }
+  li.item.current .time-col .st { color: var(--accent-text); }
+
+  li.item.past .content-col::before { border-color: var(--line); background: var(--line); }
+  li.item.future .content-col::before { background: var(--card-bg); border-color: var(--line); }
+
+  footer {
+    margin-top: 24px;
+    font-size: 11px;
+    color: var(--muted);
+    text-align: center;
+    line-height: 1.6;
+  }
+</style>
+</head>
+<body>
+<div class="app">
+  <header>
+    <div class="title-row">
+      <h1>여행 일정 타임라인</h1>
+      <span class="clock mono" id="clock"></span>
+    </div>
+    <div class="tabs" id="tabs"></div>
+    <div class="refresh-row">
+      <button class="refresh-btn mono" id="refreshBtn" type="button">
+        <svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12a9 9 0 1 1-2.64-6.36"></path><path d="M21 3v6h-6"></path></svg>
+        새로고침
+      </button>
+    </div>
+  </header>
+  <div class="theme-banner" id="themeBanner" hidden>
+    <div class="t" id="themeTitle"></div>
+    <div class="s" id="themeSub"></div>
+  </div>
+  <div class="day-note" id="dayNote"></div>
+  <ul class="timeline" id="timeline"></ul>
+  <footer></footer>
+</div>
+
+<script>
+// Optional: map of attraction info shown when a card with `place` is
+// expanded. Keep this empty and skip `place` on items if the trip doesn't
+// need photo/description cards. Schema per entry: { img, desc, source,
+// sourceLabel }. `img` can be an external https:// URL the user supplied,
+// or (preferred — works everywhere, including inside a Claude Artifact,
+// and never hits hotlink/CORS issues) a `data:image/...;base64,...` URI.
+// See SKILL.md step 4 for how to obtain and embed these.
+const PLACES = {
+  // example: {
+  //   img: "data:image/jpeg;base64,...",
+  //   desc: "2~4문장, 사실 기반, 출처에서 발췌·요약(그대로 복붙 금지).",
+  //   source: "https://ko.wikipedia.org/wiki/...",
+  //   sourceLabel: "위키백과"
+  // }
+};
+
+// One object per day. `date` must be a real "YYYY-MM-DD" — the
+// auto-today-tab and current-item highlight both key off comparing the
+// viewer's own device date/time against this. `theme`/`subtitle` are an
+// optional banner shown under the tabs for that day; leave both "" to
+// hide the banner entirely. Each item needs `start` ("HH:MM") and
+// `title`; `end`, `detail`, and `place` are all optional — a missing
+// `end` is filled in from the next item's `start` automatically, so
+// back-to-back items don't need redundant end times.
+const DAYS = [
+  {
+    date: "2026-01-01",
+    theme: "",
+    subtitle: "",
+    items: [
+      { start: "09:00", title: "예시 일정 1", detail: "선택 사항: 짧은 메모" },
+      { start: "10:00", end: "11:30", title: "예시 일정 2 (장소 카드 있음)", place: PLACES.example },
+      { start: "11:30", title: "예시 일정 3" }
+    ]
+  }
+];
+
+const WEEKDAY = ["일", "월", "화", "수", "목", "금", "토"];
+
+function toDateObj(dateStr) {
+  const [y, m, d] = dateStr.split("-").map(Number);
+  return new Date(y, m - 1, d);
+}
+
+function labelFor(dateStr) {
+  const d = toDateObj(dateStr);
+  return `${d.getMonth() + 1}/${d.getDate()} (${WEEKDAY[d.getDay()]})`;
+}
+
+function todayStr() {
+  const n = new Date();
+  return `${n.getFullYear()}-${String(n.getMonth() + 1).padStart(2, "0")}-${String(n.getDate()).padStart(2, "0")}`;
+}
+
+function nowHM() {
+  const n = new Date();
+  return `${String(n.getHours()).padStart(2, "0")}:${String(n.getMinutes()).padStart(2, "0")}`;
+}
+
+function pickInitialDayIndex() {
+  const t = todayStr();
+  const idx = DAYS.findIndex(d => d.date === t);
+  if (idx !== -1) return idx;
+  if (t < DAYS[0].date) return 0;
+  if (t > DAYS[DAYS.length - 1].date) return DAYS.length - 1;
+  return 0;
+}
+
+let activeIndex = pickInitialDayIndex();
+
+function withEffectiveEnd(items) {
+  return items.map((it, i) => {
+    const end = it.end || (items[i + 1] ? items[i + 1].start : "23:59");
+    return { ...it, effEnd: end };
+  });
+}
+
+function renderTabs() {
+  const tabs = document.getElementById("tabs");
+  const t = todayStr();
+  tabs.innerHTML = "";
+  DAYS.forEach((day, i) => {
+    const btn = document.createElement("div");
+    btn.className = "tab" + (i === activeIndex ? " active" : "") + (day.date === t ? " today" : "");
+    btn.innerHTML = `<span class="d mono">DAY ${i + 1}</span>${labelFor(day.date)}`;
+    btn.addEventListener("click", () => {
+      activeIndex = i;
+      renderTabs();
+      renderDay();
+    });
+    tabs.appendChild(btn);
+  });
+}
+
+function renderDay() {
+  const day = DAYS[activeIndex];
+  const banner = document.getElementById("themeBanner");
+  if (day.theme) {
+    banner.hidden = false;
+    document.getElementById("themeTitle").textContent = day.theme;
+    document.getElementById("themeSub").textContent = day.subtitle;
+  } else {
+    banner.hidden = true;
+  }
+
+  const note = document.getElementById("dayNote");
+  const t = todayStr();
+  if (day.date < t) note.textContent = "지난 일정입니다";
+  else if (day.date > t) note.textContent = "예정된 일정입니다";
+  else note.textContent = "오늘 일정입니다";
+
+  const items = withEffectiveEnd(day.items);
+  const ul = document.getElementById("timeline");
+  ul.innerHTML = "";
+  items.forEach((it, i) => {
+    const li = document.createElement("li");
+    li.className = "item";
+    li.dataset.start = it.start;
+    li.dataset.end = it.effEnd;
+
+    const hasDetail = !!it.detail || !!it.place;
+    let detailHtml = "";
+    if (it.place) {
+      detailHtml = `
+        <div class="place-photo">
+          <img src="${it.place.img}" alt="${it.title}" onerror="this.hidden=true; this.nextElementSibling.hidden=false;">
+          <div class="photo-fallback" hidden>
+            <svg viewBox="0 0 24 24" fill="none" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="16" rx="2"></rect><circle cx="9" cy="10" r="1.7"></circle><path d="M21 16l-5.5-5.5a2 2 0 0 0-2.8 0L3 20"></path></svg>
+            <span>사진을 불러오지 못했습니다</span>
+          </div>
+        </div>
+        ${it.detail ? `<div class="place-tag">${it.detail}</div>` : ""}
+        <p class="place-desc">${it.place.desc}</p>
+        <a class="place-source" href="${it.place.source}" target="_blank" rel="noopener noreferrer">${it.place.sourceLabel}에서 더 보기 ↗</a>
+      `;
+    } else if (it.detail) {
+      detailHtml = `<div class="detail">${it.detail}</div>`;
+    }
+    li.innerHTML = `
+      <div class="time-col mono">
+        <span class="st">${it.start}</span>
+        ${it.end ? `<span class="et">${it.end}</span>` : ""}
+      </div>
+      <div class="content-col">
+        <div class="card">
+          <div class="card-head${hasDetail ? " clickable" : ""}">
+            <span class="card-title">${it.title}</span>
+            <span class="badge-now" hidden>진행중</span>
+            ${hasDetail ? '<span class="chevron"></span>' : ""}
+          </div>
+          ${hasDetail ? `<div class="detail-wrap">${detailHtml}</div>` : ""}
+        </div>
+      </div>
+    `;
+    if (hasDetail) {
+      li.querySelector(".card-head").addEventListener("click", () => {
+        li.classList.toggle("open");
+      });
+    }
+    ul.appendChild(li);
+  });
+
+  updateHighlights();
+}
+
+function updateHighlights() {
+  const day = DAYS[activeIndex];
+  const t = todayStr();
+  const isToday = day.date === t;
+  const now = nowHM();
+  const lis = document.querySelectorAll("#timeline li.item");
+  lis.forEach(li => {
+    li.classList.remove("past", "current", "future");
+    const badge = li.querySelector(".badge-now");
+    if (!isToday) {
+      li.classList.add(day.date < t ? "past" : "future");
+      badge.hidden = true;
+      return;
+    }
+    const start = li.dataset.start;
+    const end = li.dataset.end;
+    if (now < start) {
+      li.classList.add("future");
+      badge.hidden = true;
+    } else if (now >= end) {
+      li.classList.add("past");
+      badge.hidden = true;
+    } else {
+      li.classList.add("current");
+      badge.hidden = false;
+    }
+  });
+}
+
+function updateClock() {
+  const n = new Date();
+  document.getElementById("clock").textContent =
+    `${labelFor(todayStr())} ${String(n.getHours()).padStart(2, "0")}:${String(n.getMinutes()).padStart(2, "0")}`;
+}
+
+document.getElementById("refreshBtn").addEventListener("click", () => {
+  location.href = location.pathname + "?_=" + Date.now();
+});
+
+renderTabs();
+renderDay();
+updateClock();
+setInterval(() => {
+  updateClock();
+  updateHighlights();
+}, 15000);
+</script>
+</body>
+</html>
